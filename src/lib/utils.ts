@@ -1,5 +1,4 @@
 import { z, type AnyZodObject } from "zod";
-import type { ZodEffects } from "zod";
 
 type OptionalKeys<T> = {
   [K in keyof T]-?: Record<string, unknown> extends Pick<T, K> ? K : never;

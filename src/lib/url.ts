@@ -1,6 +1,6 @@
 import type { Readable, Writable } from "svelte/store";
 import type { AnyZodObject, z, ZodEffects } from "zod";
-import { fromEntriesWithDuplicateKeys } from "@/utils/url";
+import { fromEntriesWithDuplicateKeys } from "./utils.js";
 import { writable } from "svelte/store";
 
 type OptionalKeys<T> = {
