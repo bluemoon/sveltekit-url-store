@@ -1,10 +1,10 @@
-import { z, type AnyZodObject } from 'zod';
+import { z } from 'zod';
 
-type OptionalKeys<T> = {
+export type OptionalKeys<T> = {
 	[K in keyof T]-?: Record<string, unknown> extends Pick<T, K> ? K : never;
 }[keyof T];
 
-type FilteredKeys<T, U> = {
+export type FilteredKeys<T, U> = {
 	[K in keyof T as T[K] extends U ? K : never]: T[K];
 };
 
