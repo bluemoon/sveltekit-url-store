@@ -51,6 +51,7 @@
 	"types": "./dist/index.d.ts",
 	"type": "module",
 	"dependencies": {
-		"@changesets/cli": "^2.27.1"
+		"@changesets/cli": "^2.27.1",
+		"zod": "^3.22.4"
 	}
 }
