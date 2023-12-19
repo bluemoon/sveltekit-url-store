@@ -4,7 +4,7 @@ import { fromEntriesWithDuplicateKeys } from './utils.js';
 import { derived, writable } from 'svelte/store';
 
 type OptionalKeys<T> = {
-  [K in keyof T]-?: Record<string, unknown> extends Pick<T, K> ? K : never;
+	[K in keyof T]-?: Record<string, unknown> extends Pick<T, K> ? K : never;
 }[keyof T];
 
 /**
@@ -28,134 +28,136 @@ type OptionalKeys<T> = {
  * nested effects that need to be resolved to their base types.
  */
 export type UnwrapEffects<T> = T extends ZodEffects<infer U>
-  ? UnwrapEffects<U>
-  : T extends AnyZodObject
-  ? T
-  : never;
+	? UnwrapEffects<U>
+	: T extends AnyZodObject
+		? T
+		: never;
 
 export type ZodValidation<T extends AnyZodObject> =
-  | T
-  | ZodEffects<T>
-  | ZodEffects<ZodEffects<T>>
-  | ZodEffects<ZodEffects<ZodEffects<T>>>
-  | ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>
-  | ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>;
+	| T
+	| ZodEffects<T>
+	| ZodEffects<ZodEffects<T>>
+	| ZodEffects<ZodEffects<ZodEffects<T>>>
+	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>
+	| ZodEffects<ZodEffects<ZodEffects<ZodEffects<ZodEffects<T>>>>>;
 
 export type TypedParams<T extends ZodValidation<AnyZodObject>> = {
-  data: z.infer<UnwrapEffects<T>>;
+	data: z.infer<UnwrapEffects<T>>;
 
-  from: (params: URLSearchParams) => z.infer<UnwrapEffects<T>>;
-  setQuery: <J extends keyof z.TypeOf<UnwrapEffects<T>>>(
-    key: J,
-    value: T[J]
-  ) => TypedParams<UnwrapEffects<T>>;
-  toString(): string;
+	from: (params: URLSearchParams) => z.infer<UnwrapEffects<T>>;
+	setQuery: <J extends keyof z.TypeOf<UnwrapEffects<T>>>(
+		key: J,
+		value: T[J]
+	) => TypedParams<UnwrapEffects<T>>;
+	toString(): string;
 };
 
 export function typedParams<T extends ZodValidation<AnyZodObject>>(
-  params: URLSearchParams,
-  schema: T
+	params: URLSearchParams,
+	schema: T
 ): TypedParams<UnwrapEffects<T>> {
-  type Output = z.infer<UnwrapEffects<T>>;
-  type FullOutput<Output> = Required<Output>;
-  type OutputKeys<Output> = Required<keyof FullOutput<Output>>;
+	type Output = z.infer<UnwrapEffects<T>>;
+	type FullOutput<Output> = Required<Output>;
+	type OutputKeys<Output> = Required<keyof FullOutput<Output>>;
 
-  const typed = {
-    data: {},
-    from(params: URLSearchParams) {
-      const unparsedQuery = fromEntriesWithDuplicateKeys(params.entries() ?? null);
-      const parsedQuerySchema = schema.safeParse(unparsedQuery);
+	const typed = {
+		data: {},
+		from(params: URLSearchParams) {
+			const unparsedQuery = fromEntriesWithDuplicateKeys(params.entries() ?? null);
+			const parsedQuerySchema = schema.safeParse(unparsedQuery);
 
-      if (parsedQuerySchema.success) typed.data = parsedQuerySchema.data;
-      else if (!parsedQuerySchema.success) console.error(parsedQuerySchema.error);
-      return typed;
-    },
-    setQuery<J extends OutputKeys<Output>>(key: J, value: T[J]) {
-      // Remove old value by key so we can merge new value
-      const search = new URLSearchParams(typed.data);
-      search.set(String(key), String(value));
-      return typed.from(search);
-    },
-    toString() {
-      const search = new URLSearchParams(typed.data);
-      return search.toString();
-    }
-  };
+			if (parsedQuerySchema.success) typed.data = parsedQuerySchema.data;
+			else if (!parsedQuerySchema.success) console.error(parsedQuerySchema.error);
+			return typed;
+		},
+		setQuery<J extends OutputKeys<Output>>(key: J, value: T[J]) {
+			// Remove old value by key so we can merge new value
+			const search = new URLSearchParams(typed.data);
+			search.set(String(key), String(value));
+			return typed.from(search);
+		},
+		toString() {
+			const search = new URLSearchParams(typed.data);
+			return search.toString();
+		}
+	};
 
-  return typed.from(params);
+	return typed.from(params);
 }
 
 export type TypedURLStore<T extends ZodValidation<AnyZodObject>> = Writable<
-  z.infer<UnwrapEffects<T>>
+	z.infer<UnwrapEffects<T>>
 > & {
-  url: Readable<string>;
+	url: Readable<string>;
 
-  setFrom(from: URLSearchParams): void;
-  setQuery: <J extends keyof z.TypeOf<UnwrapEffects<T>>>(key: J, value: T[J]) => void;
-  removeByKey(key: OptionalKeys<z.TypeOf<T>>): void;
+	setFrom(from: URLSearchParams): void;
+	setQuery: <J extends keyof z.TypeOf<UnwrapEffects<T>>>(key: J, value: T[J]) => void;
+	removeByKey(key: OptionalKeys<z.TypeOf<T>>): void;
 };
 
 export function createURLStore<T extends ZodValidation<AnyZodObject>>(
-  url: URLSearchParams,
-  schema: T
+	url: URLSearchParams,
+	schema: T
 ): TypedURLStore<UnwrapEffects<T>> {
-  type Output = z.infer<UnwrapEffects<T>>;
-  type FullOutput<Output> = Required<Output>;
-  type OutputKeys<Output> = Required<keyof FullOutput<Output>>;
-  type OutputOptionalKeys<Output> = OptionalKeys<Output>;
+	type Output = z.infer<UnwrapEffects<T>>;
+	type FullOutput<Output> = Required<Output>;
+	type OutputKeys<Output> = Required<keyof FullOutput<Output>>;
+	type OutputOptionalKeys<Output> = OptionalKeys<Output>;
 
-  const { subscribe, update, set } = writable<Output>(from(url));
-  const urlStore = derived({ subscribe }, (values) => {
-    // If a value for a key has been set to undefined
-    // then we remove it from the object. this prevents the URL from containing
-    // undefined e.g. c=undefined.
-    const filtered = Object.fromEntries(Object.entries(values).filter(([_key, value]) => {
-      return typeof value !== "undefined";
-    }));
-    const params = new URLSearchParams(filtered);
-    return params.toString();
-  });
+	const { subscribe, update, set } = writable<Output>(from(url));
+	const urlStore = derived({ subscribe }, (values) => {
+		// If a value for a key has been set to undefined
+		// then we remove it from the object. this prevents the URL from containing
+		// undefined e.g. c=undefined.
+		const filtered = Object.fromEntries(
+			Object.entries(values).filter(([_key, value]) => {
+				return typeof value !== 'undefined';
+			})
+		);
+		const params = new URLSearchParams(filtered);
+		return params.toString();
+	});
 
-  function from(params: URLSearchParams) {
-    const unparsedQuery = fromEntriesWithDuplicateKeys(params.entries() ?? null);
-    const parsedQuerySchema = schema.safeParse(unparsedQuery);
-    let data: Output = {} as Output;
+	function from(params: URLSearchParams) {
+		const unparsedQuery = fromEntriesWithDuplicateKeys(params.entries() ?? null);
+		const parsedQuerySchema = schema.safeParse(unparsedQuery);
+		let data: Output = {} as Output;
 
-    if (parsedQuerySchema.success) data = parsedQuerySchema.data;
-    else if (!parsedQuerySchema.success) console.error(parsedQuerySchema.error);
+		if (parsedQuerySchema.success) data = parsedQuerySchema.data;
+		else if (!parsedQuerySchema.success) console.error(parsedQuerySchema.error);
 
-    return data;
-  }
+		return data;
+	}
 
-  return {
-    subscribe,
-    update: (updater: Parameters<typeof update>[0]) => {
-      update((value) => {
-        const newValue = updater(value);
-        return newValue;
-      });
-    },
-    set: (value: Parameters<typeof set>[0]) => {
-      set(value);
-    },
-    setFrom(params: URLSearchParams) {
-      set(from(params));
-    },
-    setQuery<J extends OutputKeys<Output>>(key: J, value: T[J]) {
-      update((state) => {
-        // Remove old value by key so we can merge new value
-        const search = new URLSearchParams(state);
-        search.set(String(key), String(value));
-        return from(search);
-      });
-    },
-    removeByKey(key: OutputOptionalKeys<Output>) {
-      update((state) => {
-        const search = new URLSearchParams(state);
-        search.delete(String(key));
-        return from(search);
-      });
-    },
-    url: urlStore
-  };
+	return {
+		subscribe,
+		update: (updater: Parameters<typeof update>[0]) => {
+			update((value) => {
+				const newValue = updater(value);
+				return newValue;
+			});
+		},
+		set: (value: Parameters<typeof set>[0]) => {
+			set(value);
+		},
+		setFrom(params: URLSearchParams) {
+			set(from(params));
+		},
+		setQuery<J extends OutputKeys<Output>>(key: J, value: T[J]) {
+			update((state) => {
+				// Remove old value by key so we can merge new value
+				const search = new URLSearchParams(state);
+				search.set(String(key), String(value));
+				return from(search);
+			});
+		},
+		removeByKey(key: OutputOptionalKeys<Output>) {
+			update((state) => {
+				const search = new URLSearchParams(state);
+				search.delete(String(key));
+				return from(search);
+			});
+		},
+		url: urlStore
+	};
 }
