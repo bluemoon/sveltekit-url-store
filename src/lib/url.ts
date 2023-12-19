@@ -106,7 +106,13 @@ export function createURLStore<T extends ZodValidation<AnyZodObject>>(
 
   const { subscribe, update, set } = writable<Output>(from(url));
   const urlStore = derived({ subscribe }, (values) => {
-    const params = new URLSearchParams(values);
+    // If a value for a key has been set to undefined
+    // then we remove it from the object. this prevents the URL from containing
+    // undefined e.g. c=undefined.
+    const filtered = Object.fromEntries(Object.entries(values).filter(([_key, value]) => {
+      return typeof value !== "undefined";
+    }));
+    const params = new URLSearchParams(filtered);
     return params.toString();
   });
 
@@ -123,17 +129,14 @@ export function createURLStore<T extends ZodValidation<AnyZodObject>>(
 
   return {
     subscribe,
-    update: (updater: Updater<z.TypeOf<UnwrapEffects<T>>>) => {
+    update: (updater: Parameters<typeof update>[0]) => {
       update((value) => {
         const newValue = updater(value);
-        console.log('updating value from', value);
-        console.log('new value', newValue);
         return newValue;
       });
     },
-    set: (value: z.TypeOf<UnwrapEffects<T>>) => {
-      console.log('setting value', value);
-      set(value)
+    set: (value: Parameters<typeof set>[0]) => {
+      set(value);
     },
     setFrom(params: URLSearchParams) {
       set(from(params));
