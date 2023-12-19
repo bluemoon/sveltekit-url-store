@@ -1,5 +1,11 @@
 # sveltekit-url-store
 
+## 0.2.3
+
+### Patch Changes
+
+- 19be31c: remove the url param when the value is set to undefined
+
 ## 0.2.2
 
 ### Patch Changes
