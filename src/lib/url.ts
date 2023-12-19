@@ -1,7 +1,7 @@
 import type { Readable, Writable } from 'svelte/store';
 import type { AnyZodObject, z, ZodEffects } from 'zod';
 import { fromEntriesWithDuplicateKeys } from './utils.js';
-import { writable } from 'svelte/store';
+import { derived, writable } from 'svelte/store';
 
 type OptionalKeys<T> = {
   [K in keyof T]-?: Record<string, unknown> extends Pick<T, K> ? K : never;
@@ -33,10 +33,6 @@ export type UnwrapEffects<T> = T extends ZodEffects<infer U>
   ? T
   : never;
 
-/**
- * This is a TypeScript type definition that unwraps a nested ZodEffects type until
- * it reaches an AnyZodObject or cannot be unwrapped further.
- */
 export type ZodValidation<T extends AnyZodObject> =
   | T
   | ZodEffects<T>
@@ -108,9 +104,8 @@ export function createURLStore<T extends ZodValidation<AnyZodObject>>(
   type OutputKeys<Output> = Required<keyof FullOutput<Output>>;
   type OutputOptionalKeys<Output> = OptionalKeys<Output>;
 
-  // TODO: make this a derived?
-  const urlStore = writable('');
   const { subscribe, update, set } = writable<Output>(from(url));
+  const urlStore = derived({ subscribe }, (values) => values.toString());
 
   function from(params: URLSearchParams) {
     const unparsedQuery = fromEntriesWithDuplicateKeys(params.entries() ?? null);
@@ -135,7 +130,6 @@ export function createURLStore<T extends ZodValidation<AnyZodObject>>(
         // Remove old value by key so we can merge new value
         const search = new URLSearchParams(state);
         search.set(String(key), String(value));
-        urlStore.set(search.toString());
         return from(search);
       });
     },
@@ -143,7 +137,6 @@ export function createURLStore<T extends ZodValidation<AnyZodObject>>(
       update((state) => {
         const search = new URLSearchParams(state);
         search.delete(String(key));
-        urlStore.set(search.toString());
         return from(search);
       });
     },

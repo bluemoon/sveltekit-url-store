@@ -11,8 +11,8 @@ import { queryStringArray } from "@/utils/url";
 import { z } from "zod";
 
 export const schema = z.object({
-	filter: z.string().optional(),
-	company_ids: queryStringArray.optional()
+  filter: z.string().optional(),
+  company_ids: queryStringArray.optional()
 });
 ```
 
