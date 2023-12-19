@@ -26,3 +26,21 @@ export const load = (async ({ locals, url }) => {
 	const { data } = typedParams(url.searchParams, schema);
 }) satisfies PageServerLoad;
 ```
+
+## Client side
+
+```svelte
+<script lang="ts">
+	import { schema } from './query-params-schema';
+
+	let urlParams = createURLStore($page.url.searchParams, schema);
+
+	// set as it updates
+	$: urlParams.setFrom($page.url.searchParams);
+
+	// subscribe to all changes to the url params and update the url
+	urlParams.url.subscribe((newURL) => {
+		if (browser) goto(`?${newURL}`);
+	});
+</script>
+```
