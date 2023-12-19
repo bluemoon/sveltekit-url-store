@@ -105,7 +105,10 @@ export function createURLStore<T extends ZodValidation<AnyZodObject>>(
   type OutputOptionalKeys<Output> = OptionalKeys<Output>;
 
   const { subscribe, update, set } = writable<Output>(from(url));
-  const urlStore = derived({ subscribe }, (values) => values.toString());
+  const urlStore = derived({ subscribe }, (values) => {
+    const params = new URLSearchParams(values);
+    return params.toString();
+  });
 
   function from(params: URLSearchParams) {
     const unparsedQuery = fromEntriesWithDuplicateKeys(params.entries() ?? null);
