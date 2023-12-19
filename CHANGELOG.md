@@ -1,5 +1,11 @@
 # sveltekit-url-store
 
+## 0.2.2
+
+### Patch Changes
+
+- de1133e: debugging release
+
 ## 0.2.1
 
 ### Patch Changes
