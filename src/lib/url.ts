@@ -1,4 +1,4 @@
-import type { Readable, Writable } from 'svelte/store';
+import type { Readable, Updater, Writable } from 'svelte/store';
 import type { AnyZodObject, z, ZodEffects } from 'zod';
 import { fromEntriesWithDuplicateKeys } from './utils.js';
 import { derived, writable } from 'svelte/store';
@@ -123,8 +123,18 @@ export function createURLStore<T extends ZodValidation<AnyZodObject>>(
 
   return {
     subscribe,
-    update,
-    set,
+    update: (updater: Updater<z.TypeOf<UnwrapEffects<T>>>) => {
+      update((value) => {
+        const newValue = updater(value);
+        console.log('updating value from', value);
+        console.log('new value', newValue);
+        return newValue;
+      });
+    },
+    set: (value: z.TypeOf<UnwrapEffects<T>>) => {
+      console.log('setting value', value);
+      set(value)
+    },
     setFrom(params: URLSearchParams) {
       set(from(params));
     },
