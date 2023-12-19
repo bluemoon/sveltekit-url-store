@@ -1,5 +1,11 @@
 # sveltekit-url-store
 
+## 0.2.1
+
+### Patch Changes
+
+- c15b80e: fix url to generate a url
+
 ## 0.2.0
 
 ### Minor Changes
