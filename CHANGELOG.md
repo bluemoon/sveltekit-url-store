@@ -1,5 +1,11 @@
 # sveltekit-url-store
 
+## 0.2.0
+
+### Minor Changes
+
+- 0affda1: change urlStore to be derived
+
 ## 0.1.2
 
 ### Patch Changes
