@@ -56,5 +56,8 @@
 	"dependencies": {
 		"@changesets/cli": "^2.27.1",
 		"zod": "^3.22.4"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }
