@@ -32,6 +32,7 @@ export const load = (async ({ locals, url }) => {
 ```svelte
 <script lang="ts">
 	import { schema } from './query-params-schema';
+	import { createURLStore } from 'sveltekit-url-store';
 
 	let urlParams = createURLStore($page.url.searchParams, schema);
 
