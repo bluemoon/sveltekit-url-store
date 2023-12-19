@@ -1,58 +1,46 @@
-# create-svelte
+# sveltekit-url-store
 
-Everything you need to build a Svelte library, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
+A simple zod-based url store for SvelteKit.
 
-Read more about creating a library [in the docs](https://kit.svelte.dev/docs/packaging).
+# Shared Schema
 
-## Creating a project
+It is possible to share the schema between the frontend and the backend. We do this by creating a `schema.ts` file.
 
-If you're seeing this, you've probably already done this step. Congrats!
+```ts,schema.ts
+import { queryStringArray } from "@/utils/url";
+import { z } from "zod";
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
-
-# create a new project in my-app
-npm create svelte@latest my-app
+export const schema = z.object({
+	filter: z.string().optional(),
+	company_ids: queryStringArray.optional()
+});
 ```
 
-## Developing
+## Server side
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+```ts
+import type { PageServerLoad } from './$types';
+import { typedParams } from 'sveltekit-url-store';
 
-```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+export const load = (async ({ locals, url }) => {
+	const { data } = typedParams(url.searchParams, schema);
+}) satisfies PageServerLoad;
 ```
 
-Everything inside `src/lib` is part of your library, everything inside `src/routes` can be used as a showcase or preview app.
+## Client side
 
-## Building
+```svelte
+<script lang="ts">
+	import { schema } from './query-params-schema';
 
-To build your library:
+	let urlParams = createURLStore($page.url.searchParams, schema);
 
-```bash
-npm run package
-```
+	// set as it updates
+	$: urlParams.setFrom($page.url.searchParams);
 
-To create a production version of your showcase app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
-
-## Publishing
-
-Go into the `package.json` and give your package the desired name through the `"name"` option. Also consider adding a `"license"` field and point it to a `LICENSE` file which you can create from a template (one popular option is the [MIT license](https://opensource.org/license/mit/)).
-
-To publish your library to [npm](https://www.npmjs.com):
-
-```bash
-npm publish
+	// subscribe to all changes to the url params and update the url
+	urlParams.url.subscribe((newURL) => {
+		if (browser) goto(`?${newURL}`);
+	});
+</script>
 ```
